@@ -2,69 +2,107 @@
 
 **Note:** This repository is solely meant for educational purposes.
 
-This repository contains a series of tasks to demostrate various ways to automate tasks such as:
+## Overview
 
-* A test kubernetes cluster
-* Installing ArgoCD to deploy a sample application
-* Creating a sample application, adding prometheus metrics.
-* Visualizing application performance metrics using Grafan
-* Provide High Level Overview of setting up an HA environment.
+This repository demonstrates various automation techniques for modern cloud-native applications, including:
+
+* Setting up a local Kubernetes test cluster
+* Implementing GitOps with ArgoCD for continuous deployment
+* Creating and instrumenting a sample application with Prometheus metrics
+* Visualizing application performance with Grafana dashboards
+* Implementing high availability (HA) architecture patterns
+
+## Project Structure
+
+| Directory/File | Description |
+|----------------|-------------|
+| [sample-api/](./sample-api/) | Golang API application demonstrating the deployment workflow |
+| [argocd-apps/](./argocd-apps/) | ArgoCD application definitions (system apps and application deployments) |
+| [docs/](./docs/) | Documentation for architecture and security strategies |
+| [iac/](./iac/) | Infrastructure as Code resources |
+| [diagrams/](./diagrams/) | Architecture and workflow diagrams |
+| [Taskfile.yaml](./Taskfile.yaml) | Task definitions for automating project setup and deployment |
 
 ## Prerequisites
 
-* [Task](https://taskfile.dev/installation/)
-* [k3d](https://k3d.io/)
-* [kubectl](https://kubernetes.io/docs/tasks/tools/)
-* [helm](https://helm.sh/docs/intro/install/)
+Before getting started, ensure you have the following tools installed:
 
+* [Task](https://taskfile.dev/installation/) - Task runner for executing automation tasks
+* [k3d](https://k3d.io/) - Lightweight Kubernetes distribution for local development
+* [kubectl](https://kubernetes.io/docs/tasks/tools/) - Kubernetes command-line tool
+* [helm](https://helm.sh/docs/intro/install/) - Kubernetes package manager
 
-**Important Note** if you are colima you might need to run the following, to avoid DNS resolution issues:
+**Important Note for Colima Users:** To avoid DNS resolution issues, start Colima with:
 
 ```bash
 colima start --dns 8.8.8.8 --dns 8.8.4.4
 ```
 
-## Running the project
+## Getting Started
 
-The taskfile used on the root of this repository will be used to setup your environment to do the following:
+### Quick Setup
 
-* Create a kubernetes cluster using k3d
-* Install ArgoCD to the cluster
-* Install system applications to the cluster(Loki, Prometheus, Grafana, etc)
-* Install a sample application to the cluster
-
-You can run the following command to see all the tasks available:
-
-```bash
-task --list
-```
-
-If you intend to fully setup your environment, you can run the following command:
+To set up the complete environment in one command:
 
 ```bash
 task setup-env
 ```
 
-This will create a kubernetes cluster, install ArgoCD, install system applications and deploy the sample application.
+This will:
+1. Create a Kubernetes cluster using k3d
+2. Install ArgoCD for GitOps deployments
+3. Deploy system applications (Loki, Prometheus, Grafana, etc.)
+4. Deploy the sample application
 
-If you want to create a local registry, you can run the following command:
+### Manual Setup
+
+If you prefer to set up components individually:
+
+1. **Create a Kubernetes cluster:**
+   ```bash
+   task create-cluster
+   ```
+
+2. **Install ArgoCD:**
+   ```bash
+   task install-argocd
+   ```
+
+3. **Create a local container registry (optional):**
+   ```bash
+   task create-registry
+   ```
+
+4. **Deploy system applications:**
+   ```bash
+   task deploy-system-apps
+   ```
+
+5. **Deploy the sample application:**
+   ```bash
+   task deploy-sample-app
+   ```
+
+To see all available tasks:
 
 ```bash
-task create-registry
+task --list
 ```
 
-## Application Definitions
+## Alternative Deployment Methods
+
+The setup above uses a declarative GitOps approach with ArgoCD. For a script-based deployment alternative, see:
+[Running your Application Server using a script](./sample-api/scripting/)
+
+## Documentation
+
+This project includes comprehensive documentation:
+
+* [Cloud Architecture for HA Microservices](./docs/cloud-architecture.md) - Architectural overview for running microservices in a high-availability environment
+* [Security Strategy](./docs/security-strategy.md) - Comprehensive security approach for cloud deployments
 
 
-## Definitions
+## License
 
-This project is split into a series of tasks, some run in order, others can be run independently.
-
-Below is a list of all the application definitions and tasks that can be excuted:
-
-| Application | Description |
-|-------------|-------------|
-| [sample-api](./sample-api) | This is a Golang API that well be used to demostrate the entire deployment workflow |
-| [argocd-apps](./argocd-apps) | A collection of all application deployments using ArgoCD, currently the directory is separated into system-apps and application deployments |
-
+This project is for educational purposes only.
 

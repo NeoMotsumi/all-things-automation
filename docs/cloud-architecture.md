@@ -106,3 +106,4 @@ The GitOps approach with ArgoCD ensures consistent and secure deployments, while
 * https://www.eksworkshop.com/docs/autoscaling/compute/karpenter/
 * https://aws.amazon.com/blogs/containers/continuous-deployment-and-gitops-delivery-with-amazon-eks-blueprints-and-argocd/
 * https://docs.aws.amazon.com/prescriptive-guidance/latest/ha-resiliency-amazon-eks-apps/spread-workloads.html
+* https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-failover-configuring.html
