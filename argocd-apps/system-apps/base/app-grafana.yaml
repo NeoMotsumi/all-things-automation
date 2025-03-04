@@ -1,0 +1,45 @@
+# for more details values see: https://github.com/grafana/helm-charts/blob/grafana-6.56.6/charts/grafana/values.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-grafana
+  namespace: argocd
+spec:
+  project: default
+  source:
+    chart: grafana
+    repoURL: https://grafana.github.io/helm-charts
+    targetRevision: 6.56.6
+    helm:
+      values: |
+        # For production, an existing secret should be used, see: https://github.com/grafana/helm-charts/blob/grafana-6.56.6/charts/grafana/values.yaml#L391
+        adminUser: admin
+        adminPassword: password
+
+        # we need to add all the sources that grafana will use
+        datasources:
+          datasources.yaml:
+            apiVersion: 1
+            datasources:
+              - name: loki
+                type: loki
+                url: http://loki-read:3100
+                access: proxy
+                jsonData:
+                  timeInterval: 5m
+              - name: Prometheus
+                type: prometheus
+                url: http://prometheus-prometheus-server
+                access: proxy
+                isDefault: true
+                jsonData:
+                  timeInterval: 5m
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

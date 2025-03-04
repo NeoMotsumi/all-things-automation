@@ -1,0 +1,91 @@
+version: '3'
+
+vars:
+  CLUSTER_NAME: all-things-automation
+  ARGOCD_NAMESPACE: argocd
+  ARGOCD_VERSION: v2.14.3
+
+tasks:
+# Cluster tasks
+  create-cluster:
+    desc: Create a new k3d cluster with port mappings
+    cmds:
+      - echo "Creating k3d cluster {{.CLUSTER_NAME}}"
+      # enable load balancer to bind traffic
+      - k3d cluster create {{.CLUSTER_NAME}} --api-port 6550 --servers 1 --agents 3 --port '80:80@loadbalancer' --port '443:443@loadbalancer'
+      - kubectl cluster-info
+      - kubectl config use-context k3d-{{.CLUSTER_NAME}}
+      - task: wait-for-cluster
+
+  wait-for-cluster:
+    desc: Wait for the cluster control plane to be ready
+    cmds:
+      - echo "Waiting for Kubernetes API to be available..."
+      - echo "Copying kubeconfig file..."
+      # NB: this will overrite existing kubeconfig file
+      - k3d kubeconfig get {{.CLUSTER_NAME}} > ~/.kube/config
+      - kubectl wait --for=condition=available deployment/coredns -n kube-system --timeout=300s
+      - kubectl wait --for=condition=Ready -l k8s-app=kube-dns pods -n kube-system --timeout=300s
+      - echo "Cluster is ready!"
+
+
+  teardown-cluster:
+    desc: Delete the k3d cluster
+    cmds:
+      - echo "Deleting k3d cluster {{.CLUSTER_NAME}}"
+      - k3d cluster delete {{.CLUSTER_NAME}}  
+      # check if ~/.kube/config exists and delete it
+      - if [ -f ~/.kube/config ]; then rm ~/.kube/config; fi
+
+# this will be used to install extra required apps and manage their lifecycle
+# for installation details see: https://argo-cd.readthedocs.io/en/stable/getting_started/
+  install-argocd:
+    desc: Install ArgoCD in the cluster
+    cmds:
+      - echo "Creating namespace {{.ARGOCD_NAMESPACE}}"
+      - kubectl create namespace {{.ARGOCD_NAMESPACE}} --dry-run=client -o yaml | kubectl apply -f -
+      - echo "Installing ArgoCD {{.ARGOCD_VERSION}}"
+      - kubectl apply -n {{.ARGOCD_NAMESPACE}} -f https://raw.githubusercontent.com/argoproj/argo-cd/{{.ARGOCD_VERSION}}/manifests/install.yaml
+      - echo "Waiting for ArgoCD to be ready..."
+      - kubectl wait --for=condition=available deployment/argocd-server -n {{.ARGOCD_NAMESPACE}} --timeout=300s
+
+  # k3d create registry
+  # use this if you want to use a local registry for your images
+  # for more info on how to use a local registry with k3d see: https://k3d.io/v5.1.0/usage/registries/#testing-your-registry
+  create-registry:
+    desc: Create a new k3d registry
+    cmds:
+      - echo "Creating k3d registry"
+      - k3d registry create myregistry.localhost --port 5000
+
+  # a list of all the apps that provide monitoring and observability
+  # using argocd will make it easier to manage the lifecycle of the apps
+  deploy-system-apps:
+    desc: Deploy the system apps
+    cmds:
+      - kustomize build argocd-apps/system-apps | kubectl apply -f -
+
+  setup-env:
+    desc: Set up everything - cluster, ArgoCD, and monitoring apps
+    cmds:
+      - task: create-cluster
+      # create-cluster now runs wait-for-cluster, so we don't need to run it explicitly here
+      - task: install-argocd
+      - echo "Waiting for ArgoCD to stabilize before creating applications..."
+      - sleep 30
+      - task: deploy-system-apps
+
+# Application tasks
+  build-sample-api-image:
+    desc: Build the sample API image
+    cmds:
+      - echo "Building sample API image"
+      - docker build -t k3d-registry.localhost:5000/sample-api:latest -f sample-api/Dockerfile .
+      - docker push k3d-registry.localhost:5000/sample-api:latest
+
+  deploy-sample-api:
+    desc: Deploy the sample API
+    deps: [build-sample-api-image]
+    cmds:
+      - echo "Deploying sample API"
+      - kustomize build sample-api/manifest/base | kubectl apply -f -

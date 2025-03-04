@@ -1,0 +1,13 @@
+kind: Service
+metadata:
+  name: sample-api
+  labels:
+    app: sample-api
+spec:
+  selector:
+    app: sample-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+  type: ClusterIP

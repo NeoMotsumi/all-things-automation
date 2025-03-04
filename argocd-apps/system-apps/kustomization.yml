@@ -1,0 +1,7 @@
+kind: Kustomization
+resources:
+  - ./base/app-prometheus.yaml
+  - ./base/app-loki.yaml
+  - ./base/app-grafana.yaml
+
+namespace: argocd

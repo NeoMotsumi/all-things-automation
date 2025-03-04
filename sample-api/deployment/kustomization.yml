@@ -1,0 +1,5 @@
+kind: Kustomization
+resources:
+  - ./base/deployment.yaml
+  - ./base/service.yaml
+  - ./base/service-monitor.yaml
