@@ -1,8 +1,10 @@
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: sample-api
   labels:
     app: sample-api
+  namespace: automation
 spec:
   replicas: 1
   selector:
@@ -15,7 +17,7 @@ spec:
     spec:
       containers:
         - name: sample-api
-          image: k3d-registry.localhost:5000/sample-api:latest
+          image: k3d-automation-registry.localhost:5000/sample-api:latest
           ports:
             - containerPort: 8000
               name: http
@@ -26,3 +28,15 @@ spec:
             limits:
               cpu: 200m
               memory: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /readiness
+              port: 8000
+            initialDelaySeconds: 60
+            periodSeconds: 30              
