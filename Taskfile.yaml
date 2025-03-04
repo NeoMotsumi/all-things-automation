@@ -56,7 +56,7 @@ tasks:
     desc: Create a new k3d registry
     cmds:
       - echo "Creating k3d registry"
-      - k3d registry create myregistry.localhost --port 5000
+      - k3d registry create automation-registry.localhost --port 5000
 
   # a list of all the apps that provide monitoring and observability
   # using argocd will make it easier to manage the lifecycle of the apps
@@ -80,12 +80,12 @@ tasks:
     desc: Build the sample API image
     cmds:
       - echo "Building sample API image"
-      - docker build -t k3d-registry.localhost:5000/sample-api:latest -f sample-api/Dockerfile .
-      - docker push k3d-registry.localhost:5000/sample-api:latest
+      - docker build -t k3d-automation-registry.localhost:5000/sample-api:latest -f sample-api/Dockerfile sample-api
+      - docker push  k3d-automation-registry.localhost:5000/sample-api:latest
 
   deploy-sample-api:
     desc: Deploy the sample API
     deps: [build-sample-api-image]
     cmds:
       - echo "Deploying sample API"
-      - kustomize build sample-api/manifest/base | kubectl apply -f -
+      - kustomize build sample-api/deployment | kubectl apply -f -
